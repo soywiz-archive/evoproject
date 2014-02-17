@@ -1,14 +1,16 @@
 <?php
 
-class EvoProject {
+class EvoProjectUtils {
 	public $evoFolder;
+    public $projectFolder;
 
 	public function __construct() {
+        $this->projectFolder = getcwd();
 		$this->evoFolder = getenv('USERPROFILE') . '/.evo';
 		@mkdir($this->evoFolder, 0777, true);
 	}
 
-    protected function downloadFile($sourceUrl, $destinationPath) {
+    public function downloadFile($sourceUrl, $destinationPath) {
         if (!file_exists($destinationPath)) {
             echo "Downloading ${sourceUrl}...";
             file_put_contents($destinationPath, fopen($sourceUrl, 'rb'));
@@ -16,13 +18,22 @@ class EvoProject {
         }
     }
 
-    protected function extractZip($sourceZip, $destinationPath) {
+    public function extractZip($sourceZip, $destinationPath) {
         if (!is_dir($destinationPath)) {
             echo "Extracting {$sourceZip}...";
             $zip = new ZipArchive();
             $zip->open($sourceZip);
             $zip->extractTo($destinationPath);
             echo "Ok\n";
+        }
+    }
+
+    public function showClassTargets($className) {
+        echo "Targets:\n";
+        $reflectionClass = new ReflectionClass($className);
+        foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            if (substr($method->name, 0, 2) == '__') continue;
+            echo ' - ' . $method->name . "\n";
         }
     }
 }
@@ -39,8 +50,14 @@ if (!file_exists($exoProjectJsonPath)) {
 
 $projectInfo = json_decode(file_get_contents($exoProjectJsonPath));
 
-require_once(__DIR__ . '/evoproject.' . basename($projectInfo->language) . '.php');
+require_once(__DIR__ . '/' . basename($projectInfo->language) . '/index.php');
 $className = 'EvoProject_' . $projectInfo->language;
 
-$evoProject = new $className($projectInfo);
-$evoProject->update();
+$utils = new EvoProjectUtils();
+$evoProject = new $className($utils, $projectInfo);
+if (!isset($argv[1])) {
+    $utils->showClassTargets($className);
+    exit;
+} else {
+    exit($evoProject->{$argv[1]}());
+}

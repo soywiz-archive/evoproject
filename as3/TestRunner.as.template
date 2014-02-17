@@ -1,0 +1,16 @@
+package {
+	import org.flexunit.runner.FlexUnitCore;
+	import org.flexunit.runner.Request;
+
+	class TestRunner {
+		public function runTests() : void {
+			var core : FlexUnitCore = new FlexUnitCore();
+			core.addListener(new org.flexunit.listeners.AirCIListener()); // CIListener
+			var request:Request = Request.qualifyClasses.apply(
+				null,
+				[]
+			);
+			core.run(request);
+		}
+	}
+}
