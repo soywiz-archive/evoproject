@@ -50,7 +50,8 @@ if (!file_exists($exoProjectJsonPath)) {
 
 $projectInfo = json_decode(file_get_contents($exoProjectJsonPath));
 
-require_once(__DIR__ . '/' . basename($projectInfo->language) . '/index.php');
+$language = basename($projectInfo->language);
+require_once(__DIR__ . "/{$language}/index.{$language}.php");
 $className = 'EvoProject_' . $projectInfo->language;
 
 $utils = new EvoProjectUtils();

@@ -1,16 +1,51 @@
-package {
+package
+{
+	import flash.system.fscommand;
+	import flash.display.Sprite;
+	import flash.utils.setTimeout;
 	import org.flexunit.runner.FlexUnitCore;
 	import org.flexunit.runner.Request;
+	import org.flexunit.listeners.CIListener;
+	/*@IMPORTS@*/
 
-	class TestRunner {
-		public function runTests() : void {
+	public class TestRunner extends Sprite
+	{
+		public function TestRunner()
+		{
+			setTimeout(runTests, 0);
+		}
+
+		public function runTests() : void
+		{
+			setTimeout(function():void {
+				fscommand("quit");
+			}, 10 * 60 * 1000);
+
+			graphics.beginFill(0x000000);
+			graphics.drawRect(0,0,100,100);
+			graphics.endFill();
 			var core : FlexUnitCore = new FlexUnitCore();
-			core.addListener(new org.flexunit.listeners.AirCIListener()); // CIListener
+			core.addListener(new org.flexunit.listeners.CIListener()); // CIListener
 			var request:Request = Request.qualifyClasses.apply(
 				null,
-				[]
+				[ SampleTestClass /*@CLASSES@*/]
 			);
 			core.run(request);
 		}
+	}
+}
+
+import org.flexunit.asserts.assertEquals;
+import org.flexunit.asserts.assertTrue;
+
+class SampleTestClass {
+	[Test]
+	public function demo():void {
+		assertTrue(true);
+	}
+
+	[Test]
+	public function demo2():void {
+		assertTrue(false);
 	}
 }
