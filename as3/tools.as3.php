@@ -9,7 +9,7 @@ class As3Tools
 		$this->airSdkLocalPath = $airSdkLocalPath;
 	}
 
-	public function compc($output, $sourceList, $metadataList, $externalLibraries) {
+	public function compc($output, $sourceList, $metadataList, $externalLibraries, $defines) {
 		$cmdPath = "{$this->airSdkLocalPath}/bin/compc";
 
 		$arguments = [];
@@ -23,7 +23,8 @@ class As3Tools
 		}
 
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
-		foreach ($externalLibraries as $library) $arguments[] = '-compiler.external-library-path+=' . $library;
+		foreach ($externalLibraries as $library) if (file_exists($library)) $arguments[] = '-compiler.external-library-path+=' . $library;
+		foreach ($defines as $defineName => $defineValue) $arguments[] = '-define=' . $defineName . ',' . $defineValue;
 
 		$arguments[] = '-compiler.optimize';
 		$arguments[] = '-output=' . $output;
@@ -32,16 +33,17 @@ class As3Tools
 		$result = 0;
 		passthru($cmdPath . ' ' . implode(' ', array_map('escapeshellarg', $arguments)), $result);
 
-		if ($result != 0) throw(new Error("Error executing compc"));
+		if ($result != 0) throw(new Exception("Error executing compc"));
 	}
 
-	public function mxmlc($output, $entryFile, $sourceList, $metadataList, $libraries) {
+	public function mxmlc($output, $entryFile, $sourceList, $metadataList, $libraries, $defines) {
 		$cmdPath = "{$this->airSdkLocalPath}/bin/mxmlc";
 
 		$arguments = [];
 		foreach ($sourceList as $source) $arguments[] = "-source-path+={$source}";
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
-		foreach ($libraries as $library) $arguments[] = '-compiler.library-path+=' . $library;
+		foreach ($libraries as $library) if (file_exists($library)) $arguments[] = '-compiler.library-path+=' . $library;
+		foreach ($defines as $defineName => $defineValue) $arguments[] = '-define=' . $defineName . ',' . $defineValue;
 		$arguments[] = '-compiler.optimize';
 		$arguments[] = '-output=' . $output;
 		$arguments[] = '+configname=air';
@@ -50,7 +52,7 @@ class As3Tools
 		$result = 0;
 		passthru($cmdPath . ' ' . implode(' ', array_map('escapeshellarg', $arguments)), $result);
 
-		if ($result != 0) throw(new Error("Error executing mxmlc"));
+		if ($result != 0) throw(new Exception("Error executing mxmlc"));
 	}
 
 }

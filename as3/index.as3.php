@@ -50,8 +50,12 @@ class EvoProject_as3
 		return $this->utils->projectFolder . '/evoproject.json';
 	}
 
+	private function getArtifactExtension() {
+		return (!empty($this->projectInfo->main)) ? 'swf' : 'swc';
+	}
+
 	private function getArtifactFileName() {
-		return $this->projectInfo->name . '-' . $this->projectInfo->version . '.swc';
+		return $this->projectInfo->name . '-' . $this->projectInfo->version . '.' . $this->getArtifactExtension();
 	}
 
 	private function getArtifactPath() {
@@ -109,21 +113,28 @@ class EvoProject_as3
 
 	public function build() {
 	    $this->update();
-		$this->tools->compc(
-			$output = $this->getArtifactPath(),
-			$sourceList = isset_default($this->projectInfo->sources, ['src']),
-			$metadataList = isset_default($this->projectInfo->metadata, []),
-			$externalLibraries = [
-				$this->utils->projectFolder . '/lib',
-				$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
-			]
-		);
-	    $this->utils->repackZip($this->getArtifactPath());
+
+		$output = $this->getArtifactPath();
+		$sourceList = isset_default($this->projectInfo->sources, ['src']);
+		$metadataList = isset_default($this->projectInfo->metadata, []);
+		$externalLibraries = [
+			$this->utils->projectFolder . '/lib',
+			$this->utils->projectFolder . '/libane',
+			$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
+		];
+		$defines = isset_default($this->projectInfo->defines, []);
+
+		if (!empty($this->projectInfo->main)) {
+			$this->tools->mxmlc($output, $this->projectInfo->main, $sourceList, $metadataList, $externalLibraries, $defines);
+		} else {
+			$this->tools->compc($output, $sourceList, $metadataList, $externalLibraries, $defines);
+			$this->utils->repackZip($this->getArtifactPath());
+		}
 	}
 
 	public function deploy() {
 		$this->update();
-		$this->test();
+		//$this->test();
 		$this->build();
 
 		$repository = $this->projectInfo->repository;
@@ -131,15 +142,29 @@ class EvoProject_as3
 		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getProjectPath(), 'rb'));
 	}
 
-	/*
 	public function run()
 	{
 		$this->update();
-		$this->updateFlashTrust(realpath('out'));
 		$this->build();
+		$this->executeSwfAndUpdateFlashTrust($this->getArtifactPath());
+	}
 
+	public function test()
+	{
+	    $this->update();
+		$this->buildTest();
+		$this->serverFlexUnit();
+	}
+
+	private function executeSwfAndUpdateFlashTrust($swf) {
+		$this->updateFlashTrust(dirname($swf));
+		$this->executeSwf($swf);
+	}
+
+	private function executeSwf($swf) {
+		$pipes = [];
 		$handle = proc_open(
-			"{$this->flashPlayerLocalPath} " . escapeshellarg($this->getArtifactPath()),
+			"{$this->flashPlayerLocalPath} " . escapeshellarg($swf),
 			[
 				0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
 				1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
@@ -147,15 +172,6 @@ class EvoProject_as3
 			],
 			$pipes
 		);
-	}
-	*/
-
-	public function test()
-	{
-	    $this->update();
-		$this->updateFlashTrust(realpath('out'));
-		$this->buildTest();
-		$this->serverFlexUnit();
 	}
 
 	private function buildTest() {
@@ -206,8 +222,10 @@ class EvoProject_as3
 			$externalLibraries = [
 				$this->utils->projectFolder . '/lib',
 	            $this->utils->projectFolder . '/libtest',
+				$this->utils->projectFolder . '/libane',
 				$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
-			]
+			],
+			isset_default($this->projectInfo->defines, [])
 		);
 	}
 
@@ -229,16 +247,7 @@ class EvoProject_as3
 	}
 
 	private function serverFlexUnit() {
-		$pipes = [];
-		$handle = proc_open(
-			"{$this->flashPlayerLocalPath} out/tests.swf",
-			[
-				0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
-				1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
-				2 => array("pipe", "w") // stderr is a file to write to
-			],
-			$pipes
-		);
+		$this->executeSwfAndUpdateFlashTrust('out/tests.swf');
 
 		echo "Waiting flash player...\n";
 	    $testSuites = [];
