@@ -51,7 +51,9 @@ package
             var tests:Array = [ /*@CLASSES@*/ ];
 
             trace("Tests: " + tests.length);
-            for each (var testClass:Class in tests) trace('Test: ' + testClass);
+            if (tests.length == 0) tests.push(SampleTestClass);
+
+            //for each (var testClass:Class in tests) trace('Test: ' + testClass);
 
 			var core:FlexUnitCore = new FlexUnitCore();
 			core.addListener(new org.flexunit.listeners.CIListener()); // CIListener
@@ -61,13 +63,18 @@ package
 
 		private function uncaughtErrorHandler(event:UncaughtErrorEvent):void
 		{
-			event.stopPropagation();
-			event.stopImmediatePropagation();
-			event.preventDefault();
+		    try { trace('uncaughtErrorHandler(' + event.error + ')'); } catch (e:*) { }
+		    try {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                event.preventDefault();
 
-			var expectAsync:ExpectAsync = ExpectAsync(AsyncLocator.getCallableForTest(this));
+                var expectAsync:ExpectAsync = ExpectAsync(AsyncLocator.getCallableForTest(this));
 
-			expectAsync.failOnComplete(new Event("UncaughtErrorEvent: " + event.error.toString()), {});
+                expectAsync.failOnComplete(new Event("UncaughtErrorEvent: " + event.error.toString()), {});
+            } catch (e:*) {
+                try { trace('uncaughtErrorHandler(' + event.error + ')'); } catch (e:*) { }
+            }
 		}
 	}
 }

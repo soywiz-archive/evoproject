@@ -117,6 +117,7 @@ class EvoProject_as3
 	public function test()
 	{
 	    $this->update();
+		$this->updateFlashTrust(realpath('out'));
 		$this->buildTest();
 		$this->serverFlexUnit();
 	}
@@ -172,6 +173,15 @@ class EvoProject_as3
 				$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
 			]
 		);
+	}
+
+	private function updateFlashTrust($folder) {
+		$trustFile = getenv("APPDATA") . "/Macromedia/Flash Player/#Security/FlashPlayerTrust/evoproject.cfg";
+		$items = [];
+		if (is_file($trustFile)) $items = array_map('trim', file($trustFile));
+		$items[] = $folder;
+		array_unique($items);
+		file_put_contents($trustFile, implode("\n", $items));
 	}
 
 	private function serverFlexUnit() {
