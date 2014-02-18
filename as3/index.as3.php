@@ -46,6 +46,10 @@ class EvoProject_as3
         $this->utils->downloadFile($remoteFile, $localFile);
     }
 
+	private function getProjectPath() {
+		return $this->utils->projectFolder . '/evoproject.json';
+	}
+
 	private function getArtifactFileName() {
 		return $this->projectInfo->name . '-' . $this->projectInfo->version . '.swc';
 	}
@@ -102,9 +106,11 @@ class EvoProject_as3
 	public function deploy() {
 		$repository = $this->projectInfo->repository;
 
+		$this->test();
 		$this->build();
 
 		file_put_contents($repository . '/' . $this->getArtifactFileName(), fopen($this->getArtifactPath(), 'rb'));
+		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getProjectPath(), 'rb'));
 	}
 
     public function test()
@@ -174,13 +180,13 @@ class EvoProject_as3
         );
 
         echo "Waiting flash player...\n";
-        $socket = stream_socket_server("tcp://127.0.0.1:1024", $errno, $errstr);
+	    $testSuites = [];
+
+	    $socket = stream_socket_server("tcp://127.0.0.1:1024", $errno, $errstr);
         while (true) {
             $conn = stream_socket_accept($socket);
             //echo "Connection! {$conn}";
 	        fwriteStringz($conn, "<startOfTestRunAck/>");
-
-            $testSuites = [];
 
             while (!feof($conn)) {
                 $data = freadStringz($conn);
@@ -223,5 +229,12 @@ class EvoProject_as3
             }
         }
         fclose($socket);
+
+	    $totalFailCount = 0;
+	    foreach ($testSuites as $testSuite) {
+		    /* @var TestSuite */
+		    $totalFailCount += $testSuite->getFailureCount();
+	    }
+	    if ($totalFailCount != 0) throw(new Exception("Failed {$totalFailCount}"));
     }
 }
