@@ -120,31 +120,31 @@ function fwriteStringz($f, $str) {
 
 class EvoProjectUtils {
 	public $evoFolder;
-    public $projectFolder;
+	public $projectFolder;
 
 	public function __construct() {
-        $this->projectFolder = getcwd();
+		$this->projectFolder = getcwd();
 		$this->evoFolder = getenv('USERPROFILE') . '/.evo';
 		@mkdir($this->evoFolder, 0777, true);
 	}
 
-    public function downloadFile($sourceUrl, $destinationPath) {
-        if (!file_exists($destinationPath)) {
-            echo "Downloading ${sourceUrl}...";
-            file_put_contents($destinationPath, fopen($sourceUrl, 'rb'));
-            echo "Ok\n";
-        }
-    }
+	public function downloadFile($sourceUrl, $destinationPath) {
+		if (!file_exists($destinationPath)) {
+			echo "Downloading ${sourceUrl}...";
+			file_put_contents($destinationPath, fopen($sourceUrl, 'rb'));
+			echo "Ok\n";
+		}
+	}
 
-    public function extractZip($sourceZip, $destinationPath) {
-        if (!is_dir($destinationPath)) {
-            echo "Extracting {$sourceZip}...";
-            $zip = new ZipArchive();
-            $zip->open($sourceZip);
-            $zip->extractTo($destinationPath);
-            echo "Ok\n";
-        }
-    }
+	public function extractZip($sourceZip, $destinationPath) {
+		if (!is_dir($destinationPath)) {
+			echo "Extracting {$sourceZip}...";
+			$zip = new ZipArchive();
+			$zip->open($sourceZip);
+			$zip->extractTo($destinationPath);
+			echo "Ok\n";
+		}
+	}
 
 	public function repackZip($zipPath) {
 		$files = [];
@@ -165,18 +165,18 @@ class EvoProjectUtils {
 		$zip->close();
 	}
 
-    public function showClassTargets($className) {
-        echo "Targets:\n";
-        $reflectionClass = new ReflectionClass($className);
-        foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            if (substr($method->name, 0, 2) == '__') continue;
-            echo ' - ' . $method->name . "\n";
-        }
-    }
+	public function showClassTargets($className) {
+		echo "Targets:\n";
+		$reflectionClass = new ReflectionClass($className);
+		foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+			if (substr($method->name, 0, 2) == '__') continue;
+			echo ' - ' . $method->name . "\n";
+		}
+	}
 }
 
 function isset_default(&$var, $default) {
-    return isset($var) ? $var : $default;
+	return isset($var) ? $var : $default;
 }
 
 function rglob($pattern, $flags = 0) {
@@ -202,8 +202,14 @@ $className = 'EvoProject_' . $projectInfo->language;
 $utils = new EvoProjectUtils();
 $evoProject = new $className($utils, $projectInfo);
 if (!isset($argv[1])) {
-    $utils->showClassTargets($className);
-    exit;
+	$utils->showClassTargets($className);
+	exit;
 } else {
-    exit($evoProject->{$argv[1]}());
+	try {
+		$evoProject->{$argv[1]}();
+		exit(0);
+	} catch (Exception $e) {
+		echo $e->getMessage() . "\n";
+		exit(-1);
+	}
 }
