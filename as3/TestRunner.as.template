@@ -36,12 +36,12 @@ package
 
 		public function runTests() : void
 		{
-		    try { getDefinitionByName("com.akamon.evo3flash.display.StageReference").setRoot(this); } catch (e:*) { }
+		    try { getDefinitionByName("com.akamon.evo3flash.display.StageReference").setRoot(this); } catch (e:*) { trace(e); }
 
 			loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, uncaughtErrorHandler);
 
 			this.addChild(textField = new TextField());
-			textField.textColor = 0xFFFFFF;
+			textField.textColor = 0xFF000000;
 			trace('Running tests!');
 
 			setTimeout(function():void {
@@ -49,6 +49,9 @@ package
 			}, 10 * 60 * 1000);
 
             var tests:Array = [ /*@CLASSES@*/ ];
+
+            trace("Tests: " + tests.length);
+            for each (var testClass:Class in tests) trace('Test: ' + testClass);
 
 			var core:FlexUnitCore = new FlexUnitCore();
 			core.addListener(new org.flexunit.listeners.CIListener()); // CIListener

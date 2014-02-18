@@ -25,6 +25,10 @@ class TestCase {
 
 	public $status;
 
+	public $message;
+
+	public $stacktrace;
+
 	function __construct($classname, $name, $time, $status)
 	{
 		$this->classname = $classname;
@@ -39,7 +43,14 @@ class TestCase {
 
 	public function toXml() {
 		$result = '';
-		$result .= '<testcase classname="' . htmlspecialchars($this->classname) . '" name="' . htmlspecialchars($this->name) . '" time="' . htmlspecialchars($this->time) . '" />';
+		$result .= '<testcase classname="' . htmlspecialchars($this->classname) . '" name="' . htmlspecialchars($this->name) . '" time="' . htmlspecialchars($this->time) . '"';
+		if ($this->hasFailed()) {
+			$result .= '>';
+			$result .= '<failure message="' . htmlspecialchars($this->message) . '" type="' . htmlspecialchars($this->classname . '.' . $this->name) . '" ><![CDATA[' . $this->stacktrace . ']]></failure>';
+			$result .= '</testcase>';
+		} else {
+			$result .= ' />';
+		}
 		return $result;
 	}
 }
@@ -99,6 +110,7 @@ function freadStringz($f) {
 		if ($char === false || $char == "\0") break;
 		$string .= $char;
 	}
+	if ($string == '') return false;
 	return $string;
 }
 

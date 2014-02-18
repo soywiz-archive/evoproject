@@ -91,6 +91,7 @@ class EvoProject_as3
 	}
 
     public function build() {
+	    $this->update();
         $this->tools->compc(
             $output = $this->getArtifactPath(),
             $sourceList = isset_default($this->projectInfo->sources, ['src']),
@@ -104,17 +105,18 @@ class EvoProject_as3
     }
 
 	public function deploy() {
-		$repository = $this->projectInfo->repository;
-
+		$this->update();
 		$this->test();
 		$this->build();
 
+		$repository = $this->projectInfo->repository;
 		file_put_contents($repository . '/' . $this->getArtifactFileName(), fopen($this->getArtifactPath(), 'rb'));
 		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getProjectPath(), 'rb'));
 	}
 
     public function test()
     {
+	    $this->update();
         $this->buildTest();
         $this->serverFlexUnit();
     }
@@ -134,18 +136,22 @@ class EvoProject_as3
 
 		    if (strpos($fileContent, '[Test') < 0) continue;
 
-		    if (!preg_match("/package\\s+([\\w\\.]+)/msi", $fileContent, $matches)) continue;
+		    if (!preg_match("/package\\s+([\\w\\.]*)/msi", $fileContent, $matches)) continue;
+
 		    $packageName = trim($matches[1]);
 		    //echo "$packageName\n";
 		    if (!preg_match("/public\\s+class\\s+(\\w+)/msi", $fileContent, $matches)) continue;
+
 		    $className = trim($matches[1]);
 
-		    $qualifiedName = "{$packageName}.{$className}";
+		    $qualifiedName = ltrim("{$packageName}.{$className}", '.');
 		    //echo "$qualifiedName\n";
 
 		    $testNames[] = $qualifiedName;
 		    $imports[] = "import {$qualifiedName};";
 	    }
+
+	    if (count($testNames) == 0) throw(new Exception("No tests to run"));
 
 	    $testRunnerSource = str_replace('/*@IMPORTS@*/', implode("\n", $imports), $testRunnerSource);
 	    $testRunnerSource = str_replace('/*@CLASSES@*/', implode(",\n", $testNames), $testRunnerSource);
@@ -162,6 +168,7 @@ class EvoProject_as3
             $metadataList = isset_default($this->projectInfo->metadata, []),
             $externalLibraries = [
                 $this->utils->projectFolder . '/lib',
+	            $this->utils->projectFolder . '/libtest',
                 $this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
             ]
         );
@@ -184,12 +191,21 @@ class EvoProject_as3
 
 	    $socket = stream_socket_server("tcp://127.0.0.1:1024", $errno, $errstr);
         while (true) {
-            $conn = stream_socket_accept($socket);
-            //echo "Connection! {$conn}";
-	        fwriteStringz($conn, "<startOfTestRunAck/>");
+            $conn = stream_socket_accept($socket, 2);
+	        stream_set_timeout($conn, 5);
+	        if (!$conn) throw(new Exception("Socket not connected"));
+            echo "Connection! {$conn}";
 
             while (!feof($conn)) {
                 $data = freadStringz($conn);
+
+	            //echo "$data\n";
+
+	            if ($data === false) {
+		            fwriteStringz($conn, "<startOfTestRunAck/>");
+		            continue;
+	            }
+
                 //if (strpos())
                 if ($data == "<policy-file-request/>") {
 	                fwrite($conn,
@@ -220,6 +236,10 @@ class EvoProject_as3
 	                 */
 	                $testSuite = $testSuites[$classname];
 	                $testCase = new TestCase($classname, $name, $time, $status);
+	                if ($testCase->hasFailed()) {
+		                $testCase->message = (string)$xml->failure[0]->attributes()->message;
+		                $testCase->stacktrace = (string)(string)$xml->failure[0];
+	                }
                     $testSuite->addTestCase($testCase);
 
                     file_put_contents("out/report/TEST-{$testSuiteName}.xml", $testSuite->toXml());
