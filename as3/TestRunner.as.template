@@ -51,7 +51,7 @@ package
             var tests:Array = [ /*@CLASSES@*/ ];
 
             trace("Tests: " + tests.length);
-            if (tests.length == 0) tests.push(SampleTestClass);
+            //if (tests.length == 0) tests.push(SampleTestClass);
 
             //for each (var testClass:Class in tests) trace('Test: ' + testClass);
 
@@ -79,6 +79,7 @@ package
 	}
 }
 
+/*
 import org.flexunit.asserts.assertEquals;
 import org.flexunit.asserts.assertTrue;
 
@@ -93,3 +94,4 @@ class SampleTestClass {
 		assertTrue(false);
 	}
 }
+*/

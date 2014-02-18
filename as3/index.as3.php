@@ -58,36 +58,53 @@ class EvoProject_as3
 		return $this->utils->projectFolder . "/bin/" . $this->getArtifactFileName();
 	}
 
-	public function update() {
+	private function dependencyDictionaryToArray($dependencyList) {
+		$dependencies = [];
+		foreach ($dependencyList as $name => $version) $dependencies[] = [$name, $version];
+		return $dependencies;
+	}
+
+	private function resolveDependencies($dependencyList, $outFolder, $recursive) {
 		$repository = $this->projectInfo->repository;
 
-		foreach (['dependencies', 'testDependencies'] as $kind) {
-			foreach ($this->projectInfo->{$kind} as $name => $version) {
-				$artifactFileName = "{$name}-{$version}.swc";
-				switch ($kind) {
-					case 'dependencies':
-						$localPath = $this->utils->projectFolder . '/lib/' . $artifactFileName;
-						break;
-					case 'testDependencies':
-						$localPath = $this->utils->projectFolder . '/libtest/' . $artifactFileName;
-						break;
-					default:
-						throw(new InvalidArgumentException());
-				}
-				$remotePath = $repository . '/' . $artifactFileName;
-				if (!is_file($localPath)) {
-					echo "Downloading {$remotePath}...";
-					if (is_file($remotePath)) {
-						@mkdir(dirname($localPath), 0777, true);
-						file_put_contents($localPath, fopen($remotePath, 'rb'));
-						echo "Ok\n";
-					} else {
-						echo "Not exists\n";
+		$dependencies = $this->dependencyDictionaryToArray($dependencyList);
+		$processedDependencies = [];
+
+		while (count($dependencies) > 0) {
+			list($name, $version) = array_shift($dependencies);
+
+			if (isset($processedDependencies[$name])) continue;
+			$processedDependencies[$name] = true;
+
+			$artifactFileName = "{$name}-{$version}.swc";
+			$remotePath = $repository . '/' . $artifactFileName;
+			$localPath = $outFolder . '/' . $artifactFileName;
+			if (!is_file($localPath)) {
+				echo "Downloading {$remotePath}...";
+				if (is_file($remotePath)) {
+					@mkdir(dirname($localPath), 0777, true);
+					file_put_contents($localPath, fopen($remotePath, 'rb'));
+
+					$remoteProjectJson = $remotePath . '.project.json';
+					if (is_file($remoteProjectJson)) {
+						foreach ($this->dependencyDictionaryToArray(json_decode(file_get_contents($remoteProjectJson))->dependencies) as $item) {
+							$dependencies[] = $item;
+						}
 					}
 
+					//$dependencies[]
+
+					echo "Ok\n";
+				} else {
+					echo "Not exists\n";
 				}
 			}
 		}
+	}
+
+	public function update() {
+		$this->resolveDependencies($this->projectInfo->dependencies, $this->utils->projectFolder . '/lib', $recursive = true);
+		$this->resolveDependencies($this->projectInfo->testDependencies, $this->utils->projectFolder . '/libtest', $recursive = false);
 	}
 
 	public function build() {
@@ -113,6 +130,25 @@ class EvoProject_as3
 		file_put_contents($repository . '/' . $this->getArtifactFileName(), fopen($this->getArtifactPath(), 'rb'));
 		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getProjectPath(), 'rb'));
 	}
+
+	/*
+	public function run()
+	{
+		$this->update();
+		$this->updateFlashTrust(realpath('out'));
+		$this->build();
+
+		$handle = proc_open(
+			"{$this->flashPlayerLocalPath} " . escapeshellarg($this->getArtifactPath()),
+			[
+				0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+				1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
+				2 => array("pipe", "w") // stderr is a file to write to
+			],
+			$pipes
+		);
+	}
+	*/
 
 	public function test()
 	{
