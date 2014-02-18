@@ -176,7 +176,15 @@ class EvoProject_as3
 	}
 
 	private function updateFlashTrust($folder) {
-		$trustFile = getenv("APPDATA") . "/Macromedia/Flash Player/#Security/FlashPlayerTrust/evoproject.cfg";
+		// "/etc/adobe/FlashPlayerTrust/"
+		// "/Library/Application Support/Macromedia/FlashPlayerTrust/"
+		// System.getenv("SYSTEMROOT") + "\\system32\\Macromed\\Flash\\FlashPlayerTrust\\"
+
+		// home + "/.macromedia/Flash_Player/#Security/FlashPlayerTrust/"
+		// home + "/Library/Preferences/Macromedia/Flash Player/#Security/FlashPlayerTrust/"
+
+		$trustFolder = getenv("APPDATA") . "/Macromedia/Flash Player/#Security/FlashPlayerTrust";
+		$trustFile = $trustFolder . "/evoproject.cfg";
 		$items = [];
 		if (is_file($trustFile)) $items = array_map('trim', file($trustFile));
 		$items[] = $folder;
