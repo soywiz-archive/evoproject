@@ -2,35 +2,69 @@ package
 {
 	import flash.system.fscommand;
 	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.UncaughtErrorEvent;
+	import flash.text.TextField;
 	import flash.utils.setTimeout;
+	import flash.utils.getDefinitionByName;
+
+	import org.flexunit.async.AsyncLocator;
+	import org.flexunit.internals.runners.statements.ExpectAsync;
 	import org.flexunit.runner.FlexUnitCore;
 	import org.flexunit.runner.Request;
 	import org.flexunit.listeners.CIListener;
+
+
 	/*@IMPORTS@*/
 
 	public class TestRunner extends Sprite
 	{
+		private var textField:TextField;
+
 		public function TestRunner()
 		{
 			setTimeout(runTests, 0);
 		}
 
+		private function trace(string:String):void
+		{
+		    if (!textField) return;
+			textField.width = this.stage.stageWidth;
+			textField.height = this.stage.stageHeight;
+			textField.text += string + "\n";
+		}
+
 		public function runTests() : void
 		{
+		    try { getDefinitionByName("com.akamon.evo3flash.display.StageReference").setRoot(this); } catch (e:*) { }
+
+			loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, uncaughtErrorHandler);
+
+			this.addChild(textField = new TextField());
+			textField.textColor = 0xFFFFFF;
+			trace('Running tests!');
+
 			setTimeout(function():void {
 				fscommand("quit");
 			}, 10 * 60 * 1000);
 
-			graphics.beginFill(0x000000);
-			graphics.drawRect(0,0,100,100);
-			graphics.endFill();
-			var core : FlexUnitCore = new FlexUnitCore();
+            var tests:Array = [ /*@CLASSES@*/ ];
+
+			var core:FlexUnitCore = new FlexUnitCore();
 			core.addListener(new org.flexunit.listeners.CIListener()); // CIListener
-			var request:Request = Request.qualifyClasses.apply(
-				null,
-				[ SampleTestClass /*@CLASSES@*/]
-			);
+			var request:Request = Request.qualifyClasses.apply(null, tests);
 			core.run(request);
+		}
+
+		private function uncaughtErrorHandler(event:UncaughtErrorEvent):void
+		{
+			event.stopPropagation();
+			event.stopImmediatePropagation();
+			event.preventDefault();
+
+			var expectAsync:ExpectAsync = ExpectAsync(AsyncLocator.getCallableForTest(this));
+
+			expectAsync.failOnComplete(new Event("UncaughtErrorEvent: " + event.error.toString()), {});
 		}
 	}
 }

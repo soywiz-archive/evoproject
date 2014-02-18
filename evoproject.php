@@ -1,5 +1,111 @@
 <?php
 
+date_default_timezone_set('Europe/Madrid');
+
+class TestCase {
+	/**
+	 * @var TestSuite
+	 */
+	public $suite;
+
+	/**
+	 * @var string
+	 */
+	public $classname;
+
+	/**
+	 * @var string
+	 */
+	public $name;
+
+	/**
+	 * @var num
+	 */
+	public $time;
+
+	public $status;
+
+	function __construct($classname, $name, $time, $status)
+	{
+		$this->classname = $classname;
+		$this->name = $name;
+		$this->time = $time;
+		$this->status = $status;
+	}
+
+	public function hasFailed() {
+		return $this->status == 'failure';
+	}
+
+	public function toXml() {
+		$result = '';
+		$result .= '<testcase classname="' . htmlspecialchars($this->classname) . '" name="' . htmlspecialchars($this->name) . '" time="' . htmlspecialchars($this->time) . '" />';
+		return $result;
+	}
+}
+
+class TestSuite {
+	public $name;
+
+	/**
+	 * @var Array<TestCase>
+	 */
+	public $tests = [];
+
+	function __construct($name)
+	{
+		$this->name = $name;
+	}
+
+
+	public function getTotalTime() {
+		return array_sum(array_map(function(TestCase $test) { return $test->time; }, $this->tests));
+	}
+
+	public function getCount() {
+		return count($this->tests);
+	}
+
+	public function getFailuresTests() {
+		return array_filter($this->tests, function(TestCase $test) { return $test->hasFailed(); });
+	}
+
+	public function getFailureCount() {
+		return count($this->getFailuresTests());
+	}
+
+	public function toXml() {
+		$result = '';
+		$result .= '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+		$result .= '<testsuite name="' . htmlspecialchars($this->name) . '" tests="' . htmlspecialchars($this->getCount()) . '" failures="' . htmlspecialchars($this->getFailureCount()) . '" errors="0" skipped="0" time="' . htmlspecialchars($this->getTotalTime()) . '" hostname="' . htmlspecialchars(getenv('COMPUTERNAME')) . '" timestamp="' . htmlspecialchars(date('c')) . '">' . "\n";
+		foreach ($this->tests as $test) {
+			$result .= "\t" . $test->toXml() . "\n";
+		}
+		$result .= '</testsuite>';
+		return $result;
+	}
+
+	public function addTestCase(TestCase $testCase)
+	{
+		$testCase->suite = $this;
+		$this->tests[] = $testCase;
+	}
+}
+
+function freadStringz($f) {
+	$string = '';
+	while (!feof($f)) {
+		$char = fgetc($f);
+		if ($char === false || $char == "\0") break;
+		$string .= $char;
+	}
+	return $string;
+}
+
+function fwriteStringz($f, $str) {
+	fwrite($f, "{$str}\0");
+}
+
 class EvoProjectUtils {
 	public $evoFolder;
     public $projectFolder;
@@ -28,6 +134,25 @@ class EvoProjectUtils {
         }
     }
 
+	public function repackZip($zipPath) {
+		$files = [];
+		$zip = new ZipArchive();
+		$zip->open($zipPath);
+		for ($n = 0; $n < $zip->numFiles; $n++) {
+			$name = $zip->getNameIndex($n);
+			$content = $zip->getFromIndex($n);
+			$files[$name] = $content;
+		}
+		$zip->close();
+
+		$zip = new ZipArchive();
+		$zip->open($zipPath, ZipArchive::OVERWRITE);
+		foreach ($files as $name => $content) {
+			$zip->addFromString($name, $content);
+		}
+		$zip->close();
+	}
+
     public function showClassTargets($className) {
         echo "Targets:\n";
         $reflectionClass = new ReflectionClass($className);
@@ -40,6 +165,14 @@ class EvoProjectUtils {
 
 function isset_default(&$var, $default) {
     return isset($var) ? $var : $default;
+}
+
+function rglob($pattern, $flags = 0) {
+	$files = glob($pattern, $flags);
+	foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
+		$files = array_merge($files, rglob($dir.'/'.basename($pattern), $flags));
+	}
+	return $files;
 }
 
 $exoProjectJsonPath = 'evoproject.json';
