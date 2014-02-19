@@ -14,6 +14,7 @@ class As3Tools
 
 		$arguments = [];
 		foreach ($sourceList as $source) {
+			$arguments[] = "-source-path+={$source}";
 			$arguments[] = "-include-sources+={$source}";
 			if (file_exists("{$source}/metadata.xml")) {
 				$arguments[] = '-include-file';
@@ -40,7 +41,10 @@ class As3Tools
 		$cmdPath = "{$this->airSdkLocalPath}/bin/mxmlc";
 
 		$arguments = [];
-		foreach ($sourceList as $source) $arguments[] = "-source-path+={$source}";
+		foreach ($sourceList as $source) {
+			$arguments[] = "-source-path+={$source}";
+			$arguments[] = "-include-sources+={$source}";
+		}
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
 		foreach ($libraries as $library) if (file_exists($library)) $arguments[] = '-compiler.library-path+=' . $library;
 		foreach ($defines as $defineName => $defineValue) $arguments[] = '-define=' . $defineName . ',' . $defineValue;

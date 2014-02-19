@@ -180,29 +180,29 @@ class EvoProject_as3
 		@mkdir('out', 0777, true);
 		@mkdir('out/report', 0777, true);
 
-	    $baseTest = 'test';
-
 	    $testNames = [];
 	    $imports = [];
-	    foreach (rglob($baseTest . '/*.as') as $file) {
-		    $fileContent = file_get_contents($file);
+		foreach ($this->projectInfo->tests as $baseTest) {
+		    foreach (rglob($baseTest . '/*.as') as $file) {
+			    $fileContent = file_get_contents($file);
 
-		    if (strpos($fileContent, '[Test') < 0) continue;
+			    if (strpos($fileContent, '[Test') < 0) continue;
 
-		    if (!preg_match("/package\\s+([\\w\\.]*)/msi", $fileContent, $matches)) continue;
+			    if (!preg_match("/package\\s+([\\w\\.]*)/msi", $fileContent, $matches)) continue;
 
-		    $packageName = trim($matches[1]);
-		    //echo "$packageName\n";
-		    if (!preg_match("/public\\s+class\\s+(\\w+)/msi", $fileContent, $matches)) continue;
+			    $packageName = trim($matches[1]);
+			    //echo "$packageName\n";
+			    if (!preg_match("/public\\s+class\\s+(\\w+)/msi", $fileContent, $matches)) continue;
 
-		    $className = trim($matches[1]);
+			    $className = trim($matches[1]);
 
-		    $qualifiedName = ltrim("{$packageName}.{$className}", '.');
-		    //echo "$qualifiedName\n";
+			    $qualifiedName = ltrim("{$packageName}.{$className}", '.');
+			    //echo "$qualifiedName\n";
 
-		    $testNames[] = $qualifiedName;
-		    $imports[] = "import {$qualifiedName};";
-	    }
+			    $testNames[] = $qualifiedName;
+			    $imports[] = "import {$qualifiedName};";
+		    }
+		}
 
 	    if (count($testNames) == 0) throw(new Exception("No tests to run"));
 
