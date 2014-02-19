@@ -43,7 +43,6 @@ class As3Tools
 		$arguments = [];
 		foreach ($sourceList as $source) {
 			$arguments[] = "-source-path+={$source}";
-			//$arguments[] = "-include-sources+={$source}";
 		}
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
 		foreach ($libraries as $library) if (file_exists($library)) $arguments[] = '-compiler.library-path+=' . $library;

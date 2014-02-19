@@ -46,8 +46,8 @@ class EvoProject_as3
 		$this->utils->downloadFile($remoteFile, $localFile);
 	}
 
-	private function getProjectPath() {
-		return $this->utils->projectFolder . '/evoproject.json';
+	private function getEvoProjectJsonPath() {
+		return $this->utils->evoProjectJsonPath;
 	}
 
 	private function getArtifactExtension() {
@@ -139,7 +139,7 @@ class EvoProject_as3
 
 		$repository = $this->projectInfo->repository;
 		file_put_contents($repository . '/' . $this->getArtifactFileName(), fopen($this->getArtifactPath(), 'rb'));
-		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getProjectPath(), 'rb'));
+		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getEvoProjectJsonPath(), 'rb'));
 	}
 
 	public function run()

@@ -122,7 +122,8 @@ class EvoProjectUtils {
 	public $evoFolder;
 	public $projectFolder;
 
-	public function __construct() {
+	public function __construct($evoProjectJsonPath) {
+		$this->evoProjectJsonPath = $evoProjectJsonPath;
 		$this->projectFolder = getcwd();
 		$this->evoFolder = getenv('USERPROFILE') . '/.evo';
 		@mkdir($this->evoFolder, 0777, true);
@@ -187,26 +188,29 @@ function rglob($pattern, $flags = 0) {
 	return $files;
 }
 
-$exoProjectJsonPath = 'evoproject.json';
+$options = getopt('f:');
 
-if (!file_exists($exoProjectJsonPath)) {
-	die("Can't find '{$exoProjectJsonPath}'");
+$evoProjectJsonPath = isset_default($options['f'], 'evoproject.json');
+
+if (!file_exists($evoProjectJsonPath)) {
+	die("Can't find '{$evoProjectJsonPath}'");
 }
 
-$projectInfo = json_decode(file_get_contents($exoProjectJsonPath));
+$projectInfo = json_decode(file_get_contents($evoProjectJsonPath));
 
 $language = basename($projectInfo->language);
 require_once(__DIR__ . "/{$language}/index.{$language}.php");
 $className = 'EvoProject_' . $projectInfo->language;
 
-$utils = new EvoProjectUtils();
+$utils = new EvoProjectUtils($evoProjectJsonPath);
 $evoProject = new $className($utils, $projectInfo);
-if (!isset($argv[1])) {
+$target = array_pop($argv);
+if (count($argv) < 2 || !method_exists($evoProject, $target)) {
 	$utils->showClassTargets($className);
 	exit;
 } else {
 	try {
-		$evoProject->{$argv[1]}();
+		$evoProject->{$target}();
 		exit(0);
 	} catch (Exception $e) {
 		echo $e->getMessage() . "\n";
