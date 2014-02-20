@@ -85,13 +85,13 @@ class EvoProject_as3
 			$localPath = $outFolder . '/' . $artifactFileName;
 			if (!is_file($localPath)) {
 				echo "Downloading {$remotePath}...";
-				if (is_file($remotePath)) {
+				if (evo_file_exists($remotePath)) {
 					@mkdir(dirname($localPath), 0777, true);
-					file_put_contents($localPath, fopen($remotePath, 'rb'));
+					file_put_contents($localPath, evo_file_get_contents($remotePath));
 
 					$remoteProjectJson = $remotePath . '.project.json';
-					if (is_file($remoteProjectJson)) {
-						foreach ($this->dependencyDictionaryToArray(json_decode(file_get_contents($remoteProjectJson))->dependencies) as $item) {
+					if (evo_file_exists($remoteProjectJson)) {
+						foreach ($this->dependencyDictionaryToArray(json_decode(evo_file_get_contents($remoteProjectJson))->dependencies) as $item) {
 							$dependencies[] = $item;
 						}
 					}

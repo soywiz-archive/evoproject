@@ -196,28 +196,51 @@ function strstarts($string, $expectedStart) {
 	return substr($string, 0, strlen($expectedStart)) == $expectedStart;
 }
 
-function evo_file_put_contents($url, $content) {
+function get_credentials($url) {
 	global $credentials;
-	$authUser = NULL;
-	$authPass = NULL;
+
 	if (isset($credentials->servers)) {
 		foreach ($credentials->servers as $serverUrl => $info) {
 			if (strstarts($url, $serverUrl)) {
-				$authUser = $info->user;
-				$authPass = $info->password;
-				break;
+				return (object)['user' => $info->user, 'pass' => $info->password];
 			}
 		}
 	}
-	return _evo_file_put_contents($url, $content, $authUser, $authPass);
+
+	return NULL;
 }
 
-function _evo_file_put_contents($url, $content, $authUser = NULL, $authPass = NULL) {
+function evo_file_exists($url) {
+	if (strstarts($url, 'http://')) {
+		$headers = [];
+		$headers[] = "Content-Type: application/octet-stream";
+		$auth = get_credentials($url);
+		if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
+
+		stream_context_set_default([
+			"http" => [
+				"method" => 'HEAD',
+				'header'  => implode("\r\n", $headers) . "\r\n",
+			]
+		]);
+		$result = get_headers($url);
+
+		echo "URL: $url\n";
+		print_r($result);
+
+		return substr($result[0], 9, 3);
+	} else {
+		return file_exists($url);
+	}
+}
+
+function evo_file_put_contents($url, $content, $auth = NULL) {
 	if (strstarts($url, 'http://')) {
 		if (is_resource($content)) $content = stream_get_contents($content);
 		$headers = [];
 		$headers[] = "Content-Type: application/octet-stream";
-		if ($authUser !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$authUser}:{$authPass}");
+		$auth = get_credentials($url);
+		if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
 		file_get_contents($url, false, stream_context_create([
 			"http" => [
 				"method" => 'PUT',
@@ -227,6 +250,23 @@ function _evo_file_put_contents($url, $content, $authUser = NULL, $authPass = NU
 		]));
 	} else {
 		file_put_contents($url, $content);
+	}
+}
+
+function evo_file_get_contents($url, $auth = NULL) {
+	if (strstarts($url, 'http://')) {
+		$headers = [];
+		$headers[] = "Content-Type: application/octet-stream";
+		$auth = get_credentials($url);
+		if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
+		return file_get_contents($url, false, stream_context_create([
+			"http" => [
+				"method" => 'GET',
+				'header'  => implode("\r\n", $headers) . "\r\n",
+			]
+		]));
+	} else {
+		return file_get_contents($url);
 	}
 }
 

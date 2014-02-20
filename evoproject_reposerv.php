@@ -33,6 +33,7 @@ if (empty($file)) {
 }
 
 switch ($method) {
+	case 'HEAD':
 	case 'GET':
 		if (!is_file($localPath)) {
 			header("HTTP/1.0 404 Not Found");
@@ -40,6 +41,7 @@ switch ($method) {
 			exit;
 		} else {
 			header('Content-Type: application/octet-stream');
+			if ($method == 'HEAD') exit;
 			readfile($localPath);
 			exit;
 		}
