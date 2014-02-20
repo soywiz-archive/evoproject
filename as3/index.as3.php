@@ -138,8 +138,8 @@ class EvoProject_as3
 		$this->build();
 
 		$repository = $this->projectInfo->repository;
-		file_put_contents($repository . '/' . $this->getArtifactFileName(), fopen($this->getArtifactPath(), 'rb'));
-		file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getEvoProjectJsonPath(), 'rb'));
+		evo_file_put_contents($repository . '/' . $this->getArtifactFileName(), fopen($this->getArtifactPath(), 'rb'));
+		evo_file_put_contents($repository . '/' . $this->getArtifactFileName() . '.project.json', fopen($this->getEvoProjectJsonPath(), 'rb'));
 	}
 
 	public function run()

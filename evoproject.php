@@ -180,6 +180,10 @@ function isset_default(&$var, $default) {
 	return isset($var) ? $var : $default;
 }
 
+function empty_default(&$var, $default) {
+	return !empty($var) ? $var : $default;
+}
+
 function rglob($pattern, $flags = 0) {
 	$files = glob($pattern, $flags);
 	foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
@@ -188,13 +192,63 @@ function rglob($pattern, $flags = 0) {
 	return $files;
 }
 
+function strstarts($string, $expectedStart) {
+	return substr($string, 0, strlen($expectedStart)) == $expectedStart;
+}
+
+function evo_file_put_contents($url, $content) {
+	global $credentials;
+	$authUser = NULL;
+	$authPass = NULL;
+	if (isset($credentials->servers)) {
+		foreach ($credentials->servers as $serverUrl => $info) {
+			if (strstarts($url, $serverUrl)) {
+				$authUser = $info->user;
+				$authPass = $info->password;
+				break;
+			}
+		}
+	}
+	return _evo_file_put_contents($url, $content, $authUser, $authPass);
+}
+
+function _evo_file_put_contents($url, $content, $authUser = NULL, $authPass = NULL) {
+	if (strstarts($url, 'http://')) {
+		if (is_resource($content)) $content = stream_get_contents($content);
+		$headers = [];
+		$headers[] = "Content-Type: application/octet-stream";
+		if ($authUser !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$authUser}:{$authPass}");
+		file_get_contents($url, false, stream_context_create([
+			"http" => [
+				"method" => 'PUT',
+				'content' => $content,
+				'header'  => implode("\r\n", $headers) . "\r\n",
+			]
+		]));
+	} else {
+		file_put_contents($url, $content);
+	}
+}
+
 $options = getopt('f:');
 
-$evoProjectJsonPath = isset_default($options['f'], 'evoproject.json');
+$evoProjectJsonPath = empty_default($options['f'], 'evoproject.json');
+
+$target = array_pop($argv);
+
+if ($target == 'server') {
+	echo "Listening at 0.0.0.0:9090\n";
+	passthru(PHP_BINARY . ' -S 0.0.0.0:9090 -t . ' . __DIR__ . '/evoproject_reposerv.php 2>&1');
+	exit;
+}
 
 if (!file_exists($evoProjectJsonPath)) {
 	die("Can't find '{$evoProjectJsonPath}'");
 }
+
+$credentials = [];
+$credentialsJsonFile = __DIR__ . '/credentials.json';
+if (is_file($credentialsJsonFile)) $credentials = json_decode(file_get_contents($credentialsJsonFile));
 
 $projectInfo = json_decode(file_get_contents($evoProjectJsonPath));
 
@@ -204,8 +258,8 @@ $className = 'EvoProject_' . $projectInfo->language;
 
 $utils = new EvoProjectUtils($evoProjectJsonPath);
 $evoProject = new $className($utils, $projectInfo);
-$target = array_pop($argv);
-if (count($argv) < 2 || !method_exists($evoProject, $target)) {
+
+if (count($argv) < 1 || !method_exists($evoProject, $target)) {
 	$utils->showClassTargets($className);
 	exit;
 } else {
