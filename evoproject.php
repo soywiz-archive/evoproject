@@ -118,14 +118,17 @@ function fwriteStringz($f, $str) {
 	fwrite($f, "{$str}\0");
 }
 
+$EVO_PROJECT_PATH = getenv('USERPROFILE') . '/.evo';
+
 class EvoProjectUtils {
 	public $evoFolder;
 	public $projectFolder;
 
 	public function __construct($evoProjectJsonPath) {
+		global $EVO_PROJECT_PATH;
 		$this->evoProjectJsonPath = $evoProjectJsonPath;
 		$this->projectFolder = getcwd();
-		$this->evoFolder = getenv('USERPROFILE') . '/.evo';
+		$this->evoFolder = $EVO_PROJECT_PATH;
 		@mkdir($this->evoFolder, 0777, true);
 	}
 
@@ -210,25 +213,37 @@ function get_credentials($url) {
 	return NULL;
 }
 
+function cache_content($cacheId, $generatorCallback) {
+	global $EVO_PROJECT_PATH;
+	$localPath = $EVO_PROJECT_PATH . '/cache/' . urlencode($cacheId);
+	if (!is_file($localPath)) {
+		@mkdir(dirname($localPath), 0777, true);
+		file_put_contents($localPath, serialize($generatorCallback()));
+	}
+	return unserialize(file_get_contents($localPath));
+}
+
 function evo_file_exists($url) {
 	if (strstarts($url, 'http://')) {
-		$headers = [];
-		$headers[] = "Content-Type: application/octet-stream";
-		$auth = get_credentials($url);
-		if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
+		return cache_content("exists_{$url}", function() use ($url) {
+			$headers = [];
+			$headers[] = "Content-Type: application/octet-stream";
+			$auth = get_credentials($url);
+			if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
 
-		stream_context_set_default([
-			"http" => [
-				"method" => 'HEAD',
-				'header'  => implode("\r\n", $headers) . "\r\n",
-			]
-		]);
-		$result = get_headers($url);
+			stream_context_set_default([
+				"http" => [
+					"method" => 'HEAD',
+					'header'  => implode("\r\n", $headers) . "\r\n",
+				]
+			]);
+			$result = get_headers($url);
 
-		echo "URL: $url\n";
-		print_r($result);
+			//echo "URL: $url\n";
+			//print_r($result);
 
-		return substr($result[0], 9, 3);
+			return substr($result[0], 9, 3) == '200';
+		});
 	} else {
 		return file_exists($url);
 	}
@@ -255,16 +270,18 @@ function evo_file_put_contents($url, $content, $auth = NULL) {
 
 function evo_file_get_contents($url, $auth = NULL) {
 	if (strstarts($url, 'http://')) {
-		$headers = [];
-		$headers[] = "Content-Type: application/octet-stream";
-		$auth = get_credentials($url);
-		if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
-		return file_get_contents($url, false, stream_context_create([
-			"http" => [
-				"method" => 'GET',
-				'header'  => implode("\r\n", $headers) . "\r\n",
-			]
-		]));
+		return cache_content("get_{$url}", function() use ($url, $auth) {
+			$headers = [];
+			$headers[] = "Content-Type: application/octet-stream";
+			$auth = get_credentials($url);
+			if ($auth !== NULL) $headers[] = "Authorization: Basic ".base64_encode("{$auth->user}:{$auth->pass}");
+			return file_get_contents($url, false, stream_context_create([
+				"http" => [
+					"method" => 'GET',
+					'header'  => implode("\r\n", $headers) . "\r\n",
+				]
+			]));
+		});
 	} else {
 		return file_get_contents($url);
 	}
