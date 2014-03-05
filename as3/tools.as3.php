@@ -24,10 +24,12 @@ class As3Tools
 		}
 
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
+		//$arguments[] = "-compiler.keep-as3-metadata+=Inline";
 		foreach ($externalLibraries as $library) if (file_exists($library)) $arguments[] = '-compiler.external-library-path+=' . $library;
 		foreach ($defines as $defineName => $defineValue) $arguments[] = '-define=' . $defineName . ',' . $defineValue;
-
+		$arguments[] = '-debug=false';
 		$arguments[] = '-compiler.optimize';
+		//$arguments[] = '-compiler.inline';
 		$arguments[] = '-output=' . $output;
 		$arguments[] = '+configname=air';
 
@@ -45,9 +47,12 @@ class As3Tools
 			$arguments[] = "-source-path+={$source}";
 		}
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
+		//$arguments[] = "-compiler.keep-as3-metadata+=Inline";
 		foreach ($libraries as $library) if (file_exists($library)) $arguments[] = '-compiler.library-path+=' . $library;
 		foreach ($defines as $defineName => $defineValue) $arguments[] = '-define=' . $defineName . ',' . $defineValue;
+		$arguments[] = '-debug=false';
 		$arguments[] = '-compiler.optimize';
+		//$arguments[] = '-compiler.inline';
 		$arguments[] = '-output=' . $output;
 		$arguments[] = '+configname=air';
 		$arguments[] = $entryFile;
