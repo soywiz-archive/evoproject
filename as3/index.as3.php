@@ -113,8 +113,8 @@ class EvoProject_as3
 		if (isset($this->projectInfo->mergedDependencies)) {
 			$this->resolveDependencies($this->projectInfo->mergedDependencies, $this->utils->projectFolder . '/libmerged', $recursive = false);
 		}
-		if (isset($this->projectInfo->includedDependencies)) {
-			$this->resolveDependencies($this->projectInfo->includedDependencies, $this->utils->projectFolder . '/libincluded', $recursive = false);
+		if (isset($this->projectInfo->includeDependencies)) {
+			$this->resolveDependencies($this->projectInfo->includeDependencies, $this->utils->projectFolder . '/libinclude', $recursive = false);
 		}
 		if (isset($this->projectInfo->testDependencies)) {
 			$this->resolveDependencies($this->projectInfo->testDependencies, $this->utils->projectFolder . '/libtest', $recursive = false);
@@ -135,15 +135,15 @@ class EvoProject_as3
 		$mergedLibraries = [
 			$this->utils->projectFolder . '/libmerged',
 		];
-		$includedLibraries = [
-			$this->utils->projectFolder . '/libincluded',
+		$includeLibraries = [
+			$this->utils->projectFolder . '/libinclude',
 		];
 		$defines = isset_default($this->projectInfo->defines, []);
 
 		if (!empty($this->projectInfo->main)) {
 			$this->tools->mxmlc($output, $this->projectInfo->main, $sourceList, $metadataList, $externalLibraries, $defines);
 		} else {
-			$this->tools->compc($output, $sourceList, $metadataList, $externalLibraries, $defines, $mergedLibraries, $includedLibraries);
+			$this->tools->compc($output, $sourceList, $metadataList, $externalLibraries, $defines, $mergedLibraries, $includeLibraries);
 			$this->utils->repackZip($this->getArtifactPath());
 		}
 	}
