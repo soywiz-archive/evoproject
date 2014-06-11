@@ -9,7 +9,7 @@ class As3Tools
 		$this->airSdkLocalPath = $airSdkLocalPath;
 	}
 
-	public function compc($output, $sourceList, $metadataList, $externalLibraries, $defines) {
+	public function compc($output, $sourceList, $metadataList, $externalLibraries, $defines, $mergedLibraries, $includedLibraries) {
 		$cmdPath = "{$this->airSdkLocalPath}/bin/compc";
 
 		$arguments = [];
@@ -26,6 +26,8 @@ class As3Tools
 		foreach ($metadataList as $metadata) $arguments[] = "-compiler.keep-as3-metadata+={$metadata}";
 		//$arguments[] = "-compiler.keep-as3-metadata+=Inline";
 		foreach ($externalLibraries as $library) if (file_exists($library)) $arguments[] = '-compiler.external-library-path+=' . $library;
+		foreach ($mergedLibraries as $library) if (file_exists($library)) $arguments[] = '-compiler.library-path+=' . $library;
+		foreach ($includedLibraries as $library) if (file_exists($library)) $arguments[] = '-compiler.include-libraries+=' . $library;
 		foreach ($defines as $defineName => $defineValue) $arguments[] = '-define=' . $defineName . ',' . $defineValue;
 		$arguments[] = '-debug=false';
 		$arguments[] = '-compiler.optimize';

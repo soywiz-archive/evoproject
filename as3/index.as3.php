@@ -107,8 +107,18 @@ class EvoProject_as3
 	}
 
 	public function update() {
-		$this->resolveDependencies($this->projectInfo->dependencies, $this->utils->projectFolder . '/lib', $recursive = true);
-		$this->resolveDependencies($this->projectInfo->testDependencies, $this->utils->projectFolder . '/libtest', $recursive = false);
+		if (isset($this->projectInfo->dependencies)) {
+			$this->resolveDependencies($this->projectInfo->dependencies, $this->utils->projectFolder . '/lib', $recursive = true);
+		}
+		if (isset($this->projectInfo->mergedDependencies)) {
+			$this->resolveDependencies($this->projectInfo->mergedDependencies, $this->utils->projectFolder . '/libmerged', $recursive = false);
+		}
+		if (isset($this->projectInfo->includedDependencies)) {
+			$this->resolveDependencies($this->projectInfo->includedDependencies, $this->utils->projectFolder . '/libincluded', $recursive = false);
+		}
+		if (isset($this->projectInfo->testDependencies)) {
+			$this->resolveDependencies($this->projectInfo->testDependencies, $this->utils->projectFolder . '/libtest', $recursive = false);
+		}
 	}
 
 	public function build() {
@@ -120,14 +130,20 @@ class EvoProject_as3
 		$externalLibraries = [
 			$this->utils->projectFolder . '/lib',
 			$this->utils->projectFolder . '/libane',
-			$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
+			$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc',
+		];
+		$mergedLibraries = [
+			$this->utils->projectFolder . '/libmerged',
+		];
+		$includedLibraries = [
+			$this->utils->projectFolder . '/libincluded',
 		];
 		$defines = isset_default($this->projectInfo->defines, []);
 
 		if (!empty($this->projectInfo->main)) {
 			$this->tools->mxmlc($output, $this->projectInfo->main, $sourceList, $metadataList, $externalLibraries, $defines);
 		} else {
-			$this->tools->compc($output, $sourceList, $metadataList, $externalLibraries, $defines);
+			$this->tools->compc($output, $sourceList, $metadataList, $externalLibraries, $defines, $mergedLibraries, $includedLibraries);
 			$this->utils->repackZip($this->getArtifactPath());
 		}
 	}
