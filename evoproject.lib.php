@@ -121,7 +121,7 @@ function fwriteStringz($f, $str) {
     fwrite($f, "{$str}\0");
 }
 
-$EVO_PROJECT_PATH = getenv('USERPROFILE') . '/.evo';
+$EVO_PROJECT_PATH = evo_path();
 
 class EvoProjectUtils {
     public $evoFolder;

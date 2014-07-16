@@ -78,6 +78,13 @@ function chdirTemporarily($path, $callback) {
     return $result;
 }
 
+function evo_path() {
+    //return getenv('USERPROFILE') . '/.evo';
+    $evoPath = __DIR__ . '/.evo';
+    if (!is_dir($evoPath)) mkdir($evoPath, 0777, true);
+    return $evoPath;
+}
+
 function svn_path() {
     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
         return realpath(__DIR__ . '/bin/windows/svn.exe');
@@ -86,9 +93,41 @@ function svn_path() {
     }
 }
 
+function svn_get_user_pass() {
+    $svn_access = evo_path() . '/.svn_access';
+    if (is_file($svn_access)) {
+        list($svnUser, $svnPassword) = explode(':', trim(file_get_contents($svn_access)));
+        return (object)[ 'user' => $svnUser, 'password' => $svnPassword, ];
+    } else {
+        return null;
+        //return (object)[ 'user' => 'anonymous', 'password' => '-password-', ];
+    }
+}
+
+function svn_command($command, $args) {
+    $chunks = [];
+    $chunks[] = svn_path();
+
+    $svnAuth = svn_get_user_pass();
+    if ($svnAuth) {
+        $chunks[] = '--non-interactive';
+        $chunks[] = '--username';
+        $chunks[] = $svnAuth->user;
+        $chunks[] = '--password';
+        $chunks[] = $svnAuth->password;
+    }
+    $chunks[] = $command;
+    $chunks[] = implode(" ", array_map('escapeshellarg', $args));
+    return implode(' ', $chunks);
+}
+
+function svn($command, $args) {
+    return shell_exec(svn_command($command, $args));
+}
+
 function svn_info($path) {
     $info = [];
-    $output = shell_exec(sprintf('%s info %s', svn_path(), escapeshellarg($path)));
+    $output = svn('info', [$path]);
     foreach (explode("\n", $output) as $line) {
         @list($key, $value) = explode(':', $line, 2);
         $key = trim(strtolower($key));
@@ -103,10 +142,10 @@ function svnref_read($svnrefFile, $svnDir) {
     list($repoUrl, $repoVersion) = explode('@', $repoFullUrl, 2);
 
     if (!is_dir($svnDir)) {
-        passthru(sprintf('%s checkout %s %s', svn_path(), escapeshellarg("{$repoUrl}@{$repoVersion}"), escapeshellarg($svnDir)));
+        passthru(svn_command('checkout', ["{$repoUrl}@{$repoVersion}", $svnDir]));
     } else {
-        passthru(sprintf('%s relocate %s %s', svn_path(), escapeshellarg($repoUrl), escapeshellarg($svnDir)));
-        passthru(sprintf('%s update -r %s %s', svn_path(), escapeshellarg($repoVersion), escapeshellarg($svnDir)));
+        passthru(svn_command('relocate', $repoUrl, $svnDir));
+        passthru(svn_command('update', ['-r', $repoVersion, $svnDir]));
     }
 
     touch("{$svnDir}/.svn", filemtime($svnrefFile));

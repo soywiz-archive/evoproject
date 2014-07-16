@@ -9,16 +9,16 @@ require_once(__DIR__ . '/../SvnSync.class.php');
 class EvoProject_as3
 {
 	private $projectInfo;
-	private $airSdkVersion = '4.0';
-	private $flashVersion = '12';
+	private $airSdkVersion;
+	private $flashVersion;
 	private $tools;
 	private $utils;
 
 	public function __construct(EvoProjectUtils $utils, $projectInfo) {
 		$this->utils = $utils;
 		$this->projectInfo = $projectInfo;
-		$this->airSdkVersion = isset_default($this->projectInfo->engines->airsdk, '4.0');
-		$this->flashVersion = isset_default($this->projectInfo->engines->flashplayer, '12');
+		$this->airSdkVersion = isset_default($this->projectInfo->engines->airsdk, '14.0');
+		$this->flashVersion = isset_default($this->projectInfo->engines->flashplayer, '14');
 		$this->flashPlayerLocalPath = "{$this->utils->evoFolder}/flashplayer_{$this->flashVersion}_sa.exe";
 		$this->flashPlayerRemoteUrl = "http://download.macromedia.com/pub/flashplayer/updaters/{$this->flashVersion}/flashplayer_{$this->flashVersion}_sa.exe";
 		$this->airSdkLocalPath = "{$this->utils->evoFolder}/airsdk-{$this->airSdkVersion}";
