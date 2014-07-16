@@ -257,8 +257,8 @@ class EvoProject_as3
 		$trustFile = $trustFolder . "/evoproject.cfg";
 		$items = [];
 		if (is_file($trustFile)) $items = array_map('trim', file($trustFile));
-		$items[] = $folder;
-		array_unique($items);
+		$items[] = realpath($folder);
+		$items = array_unique($items);
 		file_put_contents($trustFile, implode("\n", $items));
 	}
 
