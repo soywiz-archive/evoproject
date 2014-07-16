@@ -104,7 +104,7 @@ function svn_get_user_pass() {
     }
 }
 
-function svn_command($command, $args) {
+function svn_command($command, array $args) {
     $chunks = [];
     $chunks[] = svn_path();
 
@@ -144,7 +144,7 @@ function svnref_read($svnrefFile, $svnDir) {
     if (!is_dir($svnDir)) {
         passthru(svn_command('checkout', ["{$repoUrl}@{$repoVersion}", $svnDir]));
     } else {
-        passthru(svn_command('relocate', $repoUrl, $svnDir));
+        passthru(svn_command('relocate', [$repoUrl, $svnDir]));
         passthru(svn_command('update', ['-r', $repoVersion, $svnDir]));
     }
 
