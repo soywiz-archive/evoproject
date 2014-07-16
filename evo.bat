@@ -1,2 +1,2 @@
 @echo off
-"%~dp0\php.exe" "%~dp0\evoproject.php" %*
+"%~dp0\bin\windows\php.exe" "%~dp0\evoproject.php" %*

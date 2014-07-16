@@ -78,9 +78,17 @@ function chdirTemporarily($path, $callback) {
     return $result;
 }
 
+function svn_path() {
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        return realpath(__DIR__ . '/bin/windows/svn.exe');
+    } else {
+        return 'svn';
+    }
+}
+
 function svn_info($path) {
     $info = [];
-    $output = shell_exec(sprintf('svn info %s', escapeshellarg($path)));
+    $output = shell_exec(sprintf('%s info %s', svn_path(), escapeshellarg($path)));
     foreach (explode("\n", $output) as $line) {
         @list($key, $value) = explode(':', $line, 2);
         $key = trim(strtolower($key));
@@ -95,10 +103,10 @@ function svnref_read($svnrefFile, $svnDir) {
     list($repoUrl, $repoVersion) = explode('@', $repoFullUrl, 2);
 
     if (!is_dir($svnDir)) {
-        passthru(sprintf('svn checkout %s %s', escapeshellarg("{$repoUrl}@{$repoVersion}"), escapeshellarg($svnDir)));
+        passthru(sprintf('%s checkout %s %s', svn_path(), escapeshellarg("{$repoUrl}@{$repoVersion}"), escapeshellarg($svnDir)));
     } else {
-        passthru(sprintf('svn relocate %s %s', escapeshellarg($repoUrl), escapeshellarg($svnDir)));
-        passthru(sprintf('svn update -r %s %s', escapeshellarg($repoVersion), escapeshellarg($svnDir)));
+        passthru(sprintf('%s relocate %s %s', svn_path(), escapeshellarg($repoUrl), escapeshellarg($svnDir)));
+        passthru(sprintf('%s update -r %s %s', svn_path(), escapeshellarg($repoVersion), escapeshellarg($svnDir)));
     }
 
     touch("{$svnDir}/.svn", filemtime($svnrefFile));

@@ -11,8 +11,7 @@ class SvnSync {
 
     private function pprint($str) {
         if ($this->_print) call_user_func($this->_print, $str);
-
-}
+    }
 
     function process($path) {
         $this->pprint("SvnSync...\n");
