@@ -1,5 +1,8 @@
 <?php
 
+require_once(__DIR__ . '/utils.php');
+require_once(__DIR__ . '/SvnSync.class.php');
+
 date_default_timezone_set('Europe/Madrid');
 
 class TestCase {
@@ -170,11 +173,13 @@ class EvoProjectUtils {
 	}
 
 	public function showClassTargets($className) {
-		echo "Targets:\n";
+		echo "Targets ($className):\n";
 		$reflectionClass = new ReflectionClass($className);
 		foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
 			if (substr($method->name, 0, 2) == '__') continue;
-			echo ' - ' . $method->name . "\n";
+			$method_name = $method->name;
+			$method_summary = get_summary_from_phpdoc($method);
+			echo " - {$method_name} - {$method_summary}\n";
 		}
 	}
 }

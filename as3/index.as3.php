@@ -1,6 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/tools.as3.php');
+require_once(__DIR__ . '/../utils.php');
+require_once(__DIR__ . '/../SvnSync.class.php');
 
 // http://download.macromedia.com/pub/flashplayer/updaters/12/flashplayer_12_sa_debug.exe
 
@@ -25,9 +27,14 @@ class EvoProject_as3
 		$this->prepare();
 	}
 
+	private function svnSync() {
+		(new SvnSync())->process($this->utils->projectFolder);
+	}
+
 	private function prepare() {
 		$this->downloadAirSdk();
 		$this->downloadFlashPlayer();
+		$this->svnSync();
 	}
 
 	private function downloadAirSdk() {
