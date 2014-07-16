@@ -61,8 +61,17 @@ class EvoProject_as3
 		return (!empty($this->projectInfo->main)) ? 'swf' : 'swc';
 	}
 
+    private function getProjectVersion() {
+        $version = $this->projectInfo->version;
+        if ($version == '*git*') {
+            $version = git_describe($this->utils->projectFolder);
+            $version = preg_replace('@^v@', '', $version);
+        }
+        return $version;
+    }
+
 	private function getArtifactFileName() {
-		return $this->projectInfo->name . '-' . $this->projectInfo->version . '.' . $this->getArtifactExtension();
+		return $this->projectInfo->name . '-' . $this->getProjectVersion() . '.' . $this->getArtifactExtension();
 	}
 
 	private function getArtifactPath() {

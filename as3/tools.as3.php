@@ -36,7 +36,8 @@ class As3Tools
 		$arguments[] = '+configname=air';
 
 		$result = 0;
-		passthru($cmdPath . ' ' . implode(' ', array_map('escapeshellarg', $arguments)), $result);
+        $fullcmd = $cmdPath . ' ' . implode(' ', array_map('escapeshellarg', $arguments));
+		passthru($fullcmd, $result);
 
 		if ($result != 0) throw(new Exception("Error executing compc"));
 	}

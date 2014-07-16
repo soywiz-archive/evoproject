@@ -3,10 +3,21 @@
 require_once(__DIR__ . '/utils.php');
 
 class SvnSync {
+    private $_print;
+
+    function __construct($print = null) {
+        $this->_print = $print;
+    }
+
+    private function pprint($str) {
+        if ($this->_print) call_user_func($this->_print, $str);
+
+}
+
     function process($path) {
-        //echo "SvnSync...\n";
+        $this->pprint("SvnSync...\n");
         if (!$this->processOne($path)) {
-            //echo "No .svnref files in tree!\n";
+            $this->pprint("No .svnref files in tree!\n");
         }
     }
 
@@ -22,10 +33,10 @@ class SvnSync {
                     $count++;
                     $svnrefFile = "{$rfile}.svnref";
                     if (!is_file($svnrefFile) || (filemtime("{$svnDir}/.svn") > filemtime($svnrefFile))) {
-                        echo "Updated {$svnrefFile}!\n";
+                        $this->pprint("Updated {$svnrefFile}!\n");
                         svnref_write($svnrefFile, $svnDir);
                     } else {
-                        //echo "Not updated {$svnrefFile}!\n";
+                        $this->pprint("Not updated {$svnrefFile}!\n");
                     }
                 } else {
                     $count += $this->processOne($rfile);

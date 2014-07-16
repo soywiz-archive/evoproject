@@ -4,6 +4,10 @@ function get_summary_from_phpdoc(ReflectionMethod $method) {
 	return trim(implode("\n", array_map(function($line) { return trim($line, " \n\r\t/*"); }, explode('\n', $method->getDocComment()))), " \n\r\t/*");
 }
 
+function safe_getopt($_argv) {
+    $argv = $_argv;
+}
+
 function glob_recursive($pattern, $flags = 0) {
     $files = glob($pattern, $flags);
 
@@ -11,6 +15,22 @@ function glob_recursive($pattern, $flags = 0) {
         $files = array_merge($files, glob_recursive($dir.'/'.basename($pattern), $flags));
     }
 
+    return $files;
+}
+
+function isset_default(&$var, $default) {
+    return isset($var) ? $var : $default;
+}
+
+function empty_default(&$var, $default) {
+    return !empty($var) ? $var : $default;
+}
+
+function rglob($pattern, $flags = 0) {
+    $files = glob($pattern, $flags);
+    foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir) {
+        $files = array_merge($files, rglob($dir.'/'.basename($pattern), $flags));
+    }
     return $files;
 }
 
@@ -51,10 +71,11 @@ function chdirTemporarily($path, $callback) {
     $oldPath = getcwd();
     chdir($path);
     //try {
-        $callback();
+        $result = $callback();
     //} finally {
         chdir($oldPath);
     //}
+    return $result;
 }
 
 function svn_info($path) {
@@ -88,3 +109,10 @@ function svnref_write($svnrefFile, $svnDir) {
     file_put_contents($svnrefFile, "{$info->url}@{$info->revision}");
     touch($svnrefFile, filemtime("{$svnDir}/.svn"));
 }
+
+function git_describe($path) {
+    return chdirTemporarily($path, function() {
+        return trim(`git describe --tags`);
+    });
+}
+
