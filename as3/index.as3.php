@@ -190,12 +190,12 @@ class EvoProject_as3
 
 	private function executeSwfAndUpdateFlashTrust($swf) {
 		$this->updateFlashTrust(dirname($swf));
-		$this->executeSwf($swf);
+		return $this->executeSwf($swf);
 	}
 
 	private function executeSwf($swf) {
 		$pipes = [];
-		$handle = proc_open(
+		return proc_open(
 			"{$this->flashPlayerLocalPath} " . escapeshellarg($swf),
 			[
 				0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
@@ -279,7 +279,7 @@ class EvoProject_as3
 	}
 
 	private function serverFlexUnit() {
-		$this->executeSwfAndUpdateFlashTrust('out/tests.swf');
+		$swfHandle = $this->executeSwfAndUpdateFlashTrust('out/tests.swf');
 
 		echo "Waiting flash player...\n";
 	    $testSuites = [];
