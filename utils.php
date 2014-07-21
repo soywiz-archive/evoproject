@@ -141,6 +141,8 @@ function svnref_read($svnrefFile, $svnDir) {
     $repoFullUrl = file_get_contents($svnrefFile);
     list($repoUrl, $repoVersion) = explode('@', $repoFullUrl, 2);
 
+    //echo "$svnrefFile, $svnDir, $repoUrl, $repoVersion\n";
+
     if (!is_dir($svnDir)) {
         passthru(svn_command('checkout', ["{$repoUrl}@{$repoVersion}", $svnDir]));
     } else {
@@ -152,6 +154,7 @@ function svnref_read($svnrefFile, $svnDir) {
 }
 
 function svnref_write($svnrefFile, $svnDir) {
+    //echo "$svnrefFile, $svnDir\n";
     $info = svn_info($svnDir);
     file_put_contents($svnrefFile, "{$info->url}@{$info->revision}");
     touch($svnrefFile, filemtime("{$svnDir}/.svn"));

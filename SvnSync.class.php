@@ -44,7 +44,7 @@ class SvnSync {
                 if (isset($info['extension']) && $info['extension'] == 'svnref') {
                     $count++;
                     $svnrefFile = $rfile;
-                    $svnDir = pathinfo($rfile)['filename'];
+                    $svnDir = dirname($rfile) . '/' . pathinfo($rfile)['filename'];
                     if (!is_dir("{$svnDir}/.svn") || (filemtime("{$svnDir}/.svn") < filemtime($svnrefFile))) {
                         svnref_read($svnrefFile, $svnDir);
                     }
