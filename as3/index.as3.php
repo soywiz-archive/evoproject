@@ -148,12 +148,8 @@ class EvoProject_as3
 			$this->utils->projectFolder . '/libane',
 			$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc',
 		];
-		$mergedLibraries = [
-			$this->utils->projectFolder . '/libmerged',
-		];
-		$includeLibraries = [
-			$this->utils->projectFolder . '/libinclude',
-		];
+		$mergedLibraries = [ $this->utils->projectFolder . '/libmerged', ];
+		$includeLibraries = [ $this->utils->projectFolder . '/libinclude', ];
 		$defines = isset_default($this->projectInfo->defines, []);
 
 		if (!empty($this->projectInfo->main)) {
@@ -256,6 +252,8 @@ class EvoProject_as3
 			$metadataList = isset_default($this->projectInfo->metadata, []),
 			$externalLibraries = [
 				$this->utils->projectFolder . '/lib',
+                $this->utils->projectFolder . '/libmerge',
+                $this->utils->projectFolder . '/libinclude',
 	            $this->utils->projectFolder . '/libtest',
 				$this->utils->projectFolder . '/libane',
 				$this->airSdkLocalPath . '/frameworks/libs/air/airglobal.swc'
