@@ -183,9 +183,11 @@ class EvoProject_as3
 
 	public function test()
 	{
+        list($socket, $port) = $this->allocateServerSocket();
+
 	    $this->update();
-		$this->buildTest();
-		$this->serverFlexUnit();
+		$this->buildTest($port);
+		$this->serverFlexUnit($socket);
 	}
 
 	private function executeSwfAndUpdateFlashTrust($swf) {
@@ -206,7 +208,7 @@ class EvoProject_as3
 		);
 	}
 
-	private function buildTest() {
+	private function buildTest($port) {
 		$testRunnerSource = file_get_contents(__DIR__ . '/TestRunner.as.template');
 
 		@mkdir('out', 0777, true);
@@ -240,6 +242,7 @@ class EvoProject_as3
 
 	    $testRunnerSource = str_replace('/*@IMPORTS@*/', implode("\n", $imports), $testRunnerSource);
 	    $testRunnerSource = str_replace('/*@CLASSES@*/', implode(",\n", $testNames), $testRunnerSource);
+        $testRunnerSource = str_replace('/*@PORT@*/', $port, $testRunnerSource);
 
 		file_put_contents('out/TestRunner.as', $testRunnerSource);
 
@@ -278,13 +281,28 @@ class EvoProject_as3
 		file_put_contents($trustFile, implode("\n", $items));
 	}
 
-	private function serverFlexUnit() {
+    private function allocateServerSocket() {
+        //$port = 1024 + (time() % 256);
+        $port = 1024;
+        $socket = stream_socket_server("tcp://127.0.0.1:{$port}", $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
+        /*
+        var_dump(stream_socket_accept($socket, 0.01));
+        var_dump(stream_context_get_params ($socket));
+        var_dump(stream_context_get_options ($socket));
+        var_dump($errno);
+        var_dump($errstr);
+        var_dump($socket);
+        */
+        return [$socket, $port];
+    }
+
+	private function serverFlexUnit($socket) {
 		$swfHandle = $this->executeSwfAndUpdateFlashTrust('out/tests.swf');
 
 		echo "Waiting flash player...\n";
 	    $testSuites = [];
 
-	    $socket = stream_socket_server("tcp://127.0.0.1:1024", $errno, $errstr);
+	    //$socket = stream_socket_server("tcp://127.0.0.1:1024", $errno, $errstr);
 		while (true) {
 			$conn = stream_socket_accept($socket, 2);
 	        if (!$conn) throw(new Exception("Socket not connected"));
