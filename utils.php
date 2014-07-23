@@ -178,3 +178,16 @@ function git_describe($path) {
     });
 }
 
+function str_removefromstart($string, $start) {
+    if (substr($string, 0, strlen($start)) == $start) {
+        return substr($string, strlen($start));
+    } else {
+        return $string;
+    }
+}
+
+function copyCreatePath($from, $to) {
+    $toName = dirname($to);
+    if (!is_dir($toName)) mkdir($toName, 0777, true);
+    copy($from, $to);
+}

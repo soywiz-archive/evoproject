@@ -152,6 +152,8 @@ class EvoProject_as3
 		$includeLibraries = [ $this->utils->projectFolder . '/libinclude', ];
 		$defines = isset_default($this->projectInfo->defines, []);
 
+        $this->copySourceExtraFiles($sourceList, 'out');
+
 		if (!empty($this->projectInfo->main)) {
 			$this->tools->mxmlc($output, $this->projectInfo->main, $sourceList, $metadataList, $externalLibraries, $defines);
 		} else {
@@ -245,6 +247,7 @@ class EvoProject_as3
 	    $sourceList = isset_default($this->projectInfo->sources, ['src']);
 	    $testList = isset_default($this->projectInfo->tests, ['test']);
 
+        $this->copySourceExtraFiles(array_merge($sourceList, $testList), 'out');
 		$this->tools->mxmlc(
 			$output = 'out/tests.swf',
 			$entryFile = 'out/TestRunner.as',
@@ -261,6 +264,21 @@ class EvoProject_as3
 			isset_default($this->projectInfo->defines, [])
 		);
 	}
+
+    private function copySourceExtraFiles($sourceList, $outFolder) {
+        foreach ($sourceList as $source) {
+            foreach (glob_recursive("{$source}/*") as $rfile) {
+                if (substr($rfile, -3) == '.as') continue;
+                if (is_dir($rfile)) continue;
+                $basefile = trim(str_removefromstart($rfile, $source), '/');
+                $ofile = "{$outFolder}/{$basefile}";
+                //echo "{$rfile} -> {$ofile}\n";
+                copyCreatePath($rfile, $ofile);
+            }
+            //echo "$source -> $outFolder\n";
+            //exit;
+        }
+    }
 
 	private function updateFlashTrust($folder) {
 		// "/etc/adobe/FlashPlayerTrust/"
