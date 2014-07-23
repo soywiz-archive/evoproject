@@ -38,6 +38,18 @@ function stripAccents($str){
     return strtr(utf8_decode($str), utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'), 'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY');
 }
 
+function convertIntoValidId($str) {
+    return preg_replace("@\\s+@", '', stripAccents($str));
+}
+
+function convertIntoValidClassName($str) {
+    return convertIntoValidId($str);
+}
+
+function convertIntoValidInstanceName($str) {
+    return convertIntoValidId($str);
+}
+
 function rrmdir($dir) {
     if (is_dir($dir)) {
         $objects = scandir($dir);
