@@ -320,7 +320,7 @@ class EvoProject_as3
 
 	    //$socket = stream_socket_server("tcp://127.0.0.1:1024", $errno, $errstr);
 		while (true) {
-			$conn = stream_socket_accept($socket, 2);
+			$conn = stream_socket_accept($socket, 30);
 	        if (!$conn) throw(new Exception("Socket not connected"));
 
 			stream_set_timeout($conn, 0, 10000);
