@@ -85,12 +85,15 @@ class EvoProject_as3
 	}
 
 	private function resolveDependencies($dependencyList, $outFolder, $recursive) {
-		$repository = $this->projectInfo->repository;
-
 		$dependencies = $this->dependencyDictionaryToArray($dependencyList);
+
+        if (!count($dependencies)) return;
+
+        $repository = $this->projectInfo->repository;
 		$processedDependencies = [];
 
 		while (count($dependencies) > 0) {
+
 			list($name, $version) = array_shift($dependencies);
 
 			if (isset($processedDependencies[$name])) continue;
