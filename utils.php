@@ -152,6 +152,7 @@ function svn_info($path) {
 function svnref_read($svnrefFile, $svnDir) {
     $repoFullUrl = file_get_contents($svnrefFile);
     list($repoUrl, $repoVersion) = explode('@', $repoFullUrl, 2);
+    $repoUrl = urldecode($repoUrl);
 
     //echo "$svnrefFile, $svnDir, $repoUrl, $repoVersion\n";
 
