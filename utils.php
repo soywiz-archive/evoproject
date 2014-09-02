@@ -50,23 +50,20 @@ function convertIntoValidInstanceName($str) {
     return convertIntoValidId($str);
 }
 
-function rrmdir($dir) {
-    if (is_dir($dir)) {
-        $objects = scandir($dir);
-        foreach ($objects as $object) {
-            if ($object == "." || $object == "..") continue;
-            $rfile = "{$dir}/{$object}";
-            if (filetype($rfile) == "dir") {
-                rrmdir($rfile);
-            } else {
-                //echo "unlink($rfile);\n";
-                unlink($rfile);
-            }
+function rrmdir($dir, $removeFirst = true) {
+    if (!is_dir($dir)) return;
+    foreach (scandir($dir) as $file) {
+        if ($file == "." || $file == "..") continue;
+        $rfile = "{$dir}/{$file}";
+        if (is_dir($rfile)) {
+            rrmdir($rfile, true);
+        } else {
+            //echo "unlink($rfile);\n";
+            unlink($rfile);
         }
-        reset($objects);
-        //echo "rmdir($dir);\n";
-        rmdir($dir);
     }
+    //echo "rmdir($dir);\n";
+    if ($removeFirst) rmdir($dir);
 }
 
 function setTemporarily(&$var, $newValue, $callback) {
