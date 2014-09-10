@@ -43,7 +43,7 @@ function convertIntoValidId($str) {
 }
 
 function convertIntoValidClassName($str) {
-    return convertIntoValidId($str);
+    return ucfirst(convertIntoValidId($str));
 }
 
 function convertIntoValidInstanceName($str) {
